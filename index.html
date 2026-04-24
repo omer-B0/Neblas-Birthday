@@ -302,6 +302,38 @@
         border-color: var(--yw);
         transform: translateY(-4px) scale(1.05);
       }
+      .btn-song {
+        padding: 14px 28px;
+        border-radius: 50px;
+        border: none;
+        background: linear-gradient(135deg, var(--pu), #c084fc);
+        color: #fff;
+        font-family: "Nunito", sans-serif;
+        font-weight: 900;
+        font-size: 1rem;
+        cursor: pointer;
+        box-shadow: 0 6px 20px rgba(155, 93, 229, 0.4);
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        position: relative;
+        overflow: hidden;
+      }
+      .btn-song:hover {
+        transform: translateY(-4px) scale(1.05);
+        box-shadow: 0 10px 28px rgba(155, 93, 229, 0.55);
+      }
+      .btn-song.playing {
+        animation: songPulse 1s ease-in-out infinite alternate;
+      }
+      @keyframes songPulse {
+        from {
+          box-shadow: 0 6px 20px rgba(155, 93, 229, 0.4);
+          transform: scale(1);
+        }
+        to {
+          box-shadow: 0 10px 36px rgba(155, 93, 229, 0.75);
+          transform: scale(1.04);
+        }
+      }
       .egg-hint {
         margin-top: 14px;
         font-size: 0.8rem;
@@ -812,6 +844,9 @@
         <h1 class="hbd-name">Neblas! 🥳</h1>
         <p class="hbd-sub">Today is all about you 🌟</p>
         <div class="home-btns">
+          <button class="btn-song" id="song-btn" onclick="toggleSong()">
+            🎵 Song from All of Us
+          </button>
           <button class="btn-main" onclick="go('game')">
             🎮 Play the Game
           </button>
@@ -928,6 +963,7 @@
     <!-- Sound files -->
     <audio id="sfx-wrong" src="wrong.mp3" preload="auto"></audio>
     <audio id="sfx-success" src="success.mp3" preload="auto"></audio>
+    <audio id="sfx-song" src="SurpriseSong.mp3" preload="auto"></audio>
 
     <script>
       // ============================================================
@@ -1233,8 +1269,43 @@
       }
 
       // ============================================================
-      // VIDEO
+      // SURPRISE SONG — plays for 20 seconds then stops
       // ============================================================
+      var songTimer = null;
+      var songPlaying = false;
+
+      function toggleSong() {
+        var audio = document.getElementById("sfx-song");
+        var btn = document.getElementById("song-btn");
+        if (!audio) return;
+
+        if (songPlaying) {
+          // Stop it
+          audio.pause();
+          audio.currentTime = 0;
+          clearTimeout(songTimer);
+          songPlaying = false;
+          btn.textContent = "🎵 Song from All of Us";
+          btn.classList.remove("playing");
+        } else {
+          // Play it
+          audio.volume = 1.0;
+          audio.currentTime = 0;
+          audio.play().catch(function () {});
+          songPlaying = true;
+          btn.textContent = "⏹ Stop Song";
+          btn.classList.add("playing");
+          // Auto-stop after 20 seconds
+          songTimer = setTimeout(function () {
+            audio.pause();
+            audio.currentTime = 0;
+            songPlaying = false;
+            btn.textContent = "🎵 Song from All of Us";
+            btn.classList.remove("playing");
+          }, 20000);
+        }
+      }
+
       function initVideo() {
         var vid = document.getElementById("fam-vid");
         var fallback = document.getElementById("vid-fallback");
@@ -1254,6 +1325,22 @@
       var fromGroup = "family";
 
       function go(page) {
+        // Stop the surprise song if navigating away from home
+        if (page !== "home" && songPlaying) {
+          var _sa = document.getElementById("sfx-song");
+          var _sb = document.getElementById("song-btn");
+          if (_sa) {
+            _sa.pause();
+            _sa.currentTime = 0;
+          }
+          clearTimeout(songTimer);
+          songPlaying = false;
+          if (_sb) {
+            _sb.textContent = "🎵 Song from All of Us";
+            _sb.classList.remove("playing");
+          }
+        }
+
         document.querySelectorAll(".pg").forEach(function (p) {
           p.classList.remove("on");
         });
